@@ -1,0 +1,1 @@
+Hello! This is a simple lil project (atm) for a quick natural selection simulation! Uses tkinter for graphics, run main.All cuztomized settings must be from the code (WIP for editing after running). Currently there is no mutations so it doesnt really do any natural selection.
