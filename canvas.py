@@ -1,6 +1,9 @@
-from tkinter import *
-import helper
 import time
+
+from tkinter import *
+
+import helper
+from BugTypes import Bug, BugGround
 
 class HCanvas(object):
     canvas = None
@@ -10,7 +13,7 @@ class HCanvas(object):
     scale = 3
     def __init__(self):
         self.root = Tk()
-        self.root.geometry('900x900')
+        self.root.geometry('910x910')
         self.canvas = Canvas(self.root, height=self.scale*helper.clen, width=self.scale*helper.clen, bg='white')
         self.canvas.pack()
 
@@ -22,7 +25,10 @@ class HCanvas(object):
                 self.canvas.move(
                     foundbug, self.scale*bug.lastx, self.scale*bug.lasty)
             else:
-                self.tkbugs[bug] = self.canvas.create_rectangle(self.scale*bug.x, self.scale*bug.y, self.scale*(bug.x+1), self.scale*(bug.y+1), fill="red", outline="red")
+                colour = "red"
+                if issubclass(bug.__class__, BugGround):
+                    colour = "magenta"
+                self.tkbugs[bug] = self.canvas.create_rectangle(self.scale*bug.x, self.scale*bug.y, self.scale*(bug.x+1), self.scale*(bug.y+1), fill=colour, outline=colour)
         for bug in list(set(self.tkbugs.keys()) - set(helper.bugs)):
             self.canvas.delete(self.tkbugs[bug])
             self.tkbugs.pop(bug)
