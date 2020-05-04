@@ -12,22 +12,34 @@ class Bug(object):
     # for display and energy
     lastx = 0
     lasty = 0
+    prevx = 0
+    prevy = 0
     # genetic deciders
     strength = 5
-    energy = 50
-    # childhood immunity
+    energy = 40
+    # childhood immunity, also stops first turn step
     immunity = 50
     # energy gain from food
     digestion = 10
-    def __init__(self, x, y, moves=[1,1,1,1], movechance=[25,25,25,25], strength=5, digestion = 10):
+    def __init__(self, x, y, moves=None,movechance=None,strength=None,digestion=None):
         self.x = x
         self.y = y
-        self.moves = moves
-        self.movechance = movechance
-        self.strength = strength
+        if moves:
+            self.moves = moves
+        if movechance:
+            self.movechance = movechance
+        if strength:
+            self.strength = strength
+        if digestion:
+            self.digestion = digestion
 
     def step(self):
         self.immunity -= 1
+        if self.immunity == 49:
+            return
+        self.prevx = self.x
+        self.prevy = self.y
+
         index = self.randmove()
         # random movement options
         if index == 0:
@@ -59,8 +71,10 @@ class Bug(object):
         elif self.y > helper.clen:
             self.lasty -= (self.y-helper.clen)
             self.y = helper.clen
+
+        helper.movebug(self)
         self.eat()
-        self.attack()
+        helper.attackbug(self)
         self.energyloss(index)
 
     def eat(self):
@@ -70,15 +84,11 @@ class Bug(object):
             self.reproduce()
 
     def energyloss(self, index):
-        self.energy -= ((.02*self.strength) + (.1*self.lastx) + (.1*self.lasty))
+        self.energy -= ((.1*self.strength) + (.2*self.lastx)**2 + (.2*self.lasty)**2)
         if self.energy <= 0:
             self.die()
 
     def die(self):
-        try:
-            helper.bugs.remove(self)
-        except ValueError:
-            pass
         del self
 
     def reproduce(self):
@@ -89,23 +99,22 @@ class Bug(object):
         for move in self.movechance:
             newprobs.append(move+(random.random()*.2*move)-(.1*move))
         newstr = self.strength+(random.random()*.2*self.strength)-(.1*self.strength)
-        helper.bugs.append(self.__class__(self.x, self.y, newmoves, newprobs, newstr))
+        helper.makebug(self.__class__(self.x, self.y, newmoves, newprobs, newstr))
 
-    def attack(self):
-        for bug in helper.bugs:
-            if int(bug.x) == int(self.x) and int(bug.y) == int(self.y) and bug.immunity <= 0:
-                if self.strength > bug.strength:
-                    self.energy += .5*bug.energy
-                    bug.die()
-                elif bug.strength < self.strength:
-                    bug.energy += .5*self.energy
-                    self.die()
-                elif self.energy > bug.energy:
-                    self.energy -= 0.5*bug.energy
-                    bug.die()
-                elif bug.energy > self.energy:
-                    bug.energy -= 0.5*self.energy
-                    self.die()
+    def attack(self, bug):
+        if bug.immunity < 0:
+            if self.strength > bug.strength:
+                self.energy += .5*bug.energy
+                helper.killbug(bug)
+            elif bug.strength < self.strength:
+                bug.energy += .5*self.energy
+                helper.killbug(self)
+            elif self.energy > bug.energy:
+                self.energy -= 0.5*bug.energy
+                helper.killbug(bug)
+            elif bug.energy > self.energy:
+                bug.energy -= 0.5*self.energy
+                helper.killbug(self)
 
 
     def randmove(self):

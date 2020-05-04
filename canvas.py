@@ -13,7 +13,7 @@ class HCanvas(object):
     scale = 3
     def __init__(self):
         self.root = Tk()
-        self.root.geometry('910x910')
+        self.root.geometry('910x905')
         self.canvas = Canvas(self.root, height=self.scale*helper.clen, width=self.scale*helper.clen, bg='white')
         self.canvas.pack()
 

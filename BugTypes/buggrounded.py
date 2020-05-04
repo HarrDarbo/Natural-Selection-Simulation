@@ -2,6 +2,7 @@ import helper
 from .bugnaive import Bug
 
 class BugGround(Bug):
+    digestion = 8
     def eat(self):
         sign = lambda a: 1 if a>0 else -1
         if self.lastx != 0:
@@ -14,3 +15,7 @@ class BugGround(Bug):
         if self.energy > 50:
             self.energy -= 30
             self.reproduce()
+
+    def attack(self, bug):
+        if not issubclass(bug.__class__, BugGround):
+            super().attack(bug)
