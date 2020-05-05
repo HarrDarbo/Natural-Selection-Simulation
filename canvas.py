@@ -3,18 +3,18 @@ import time
 from tkinter import *
 
 import helper
-from BugTypes import Bug, BugGround
+from BugTypes import *
 
 class HCanvas(object):
     canvas = None
     tkbugs = dict()
     tkfoods = dict()
     root = None
-    scale = 3
+    scale = 2.5
     def __init__(self):
         self.root = Tk()
-        self.root.geometry('910x905')
-        self.canvas = Canvas(self.root, height=self.scale*helper.clen, width=self.scale*helper.clen, bg='white')
+        self.root.geometry('1010x1005')
+        self.canvas = Canvas(self.root, height=self.scale*helper.clen, width=self.scale*helper.clen, bg='black')
         self.canvas.pack()
 
     def step(self):
@@ -25,9 +25,7 @@ class HCanvas(object):
                 self.canvas.move(
                     foundbug, self.scale*bug.lastx, self.scale*bug.lasty)
             else:
-                colour = "red"
-                if issubclass(bug.__class__, BugGround):
-                    colour = "magenta"
+                colour = bug.colour
                 self.tkbugs[bug] = self.canvas.create_rectangle(self.scale*bug.x, self.scale*bug.y, self.scale*(bug.x+1), self.scale*(bug.y+1), fill=colour, outline=colour)
         for bug in list(set(self.tkbugs.keys()) - set(helper.bugs)):
             self.canvas.delete(self.tkbugs[bug])
