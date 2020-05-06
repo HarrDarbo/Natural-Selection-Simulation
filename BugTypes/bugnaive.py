@@ -7,7 +7,7 @@ class Bug(object):
     x = None
     y = None
     # Flags (for child classes)
-    colour = "red"
+    colour = "brown"
     classfriendly = False
     jump = True
     followfood = True
@@ -118,7 +118,7 @@ class Bug(object):
             self.reproduce()
 
     def energyloss(self):
-        self.energy -= ((.1*self.strength) + (.1*self.lastx)**2 + (.1*self.lasty)**2 + 0.1*(.04*self.digestion)**4)
+        self.energy -= ((.1*self.strength) + (.1*self.lastx)**2 + (.1*self.lasty)**2 + 0.4*(.04*self.digestion)**4)
         if self.energy <= 0:
             helper.killbug(self)
 
@@ -140,8 +140,8 @@ class Bug(object):
         helper.makebug(self.__class__(self.x, self.y, moves=newmoves, movechance=newprobs, strength=newstr, digestion=newdig, hostility=newhost))
 
     def attack(self, bug):
-        if self.randmove(self.hostility) == 0 and not (self.classfriendly and issubclass(bug.__class__, self.__class__)) and not bug.immune():
-            actualstr = self.strength - self.strdebuff
+        if self.randmove(self.hostility) == 0 and not (self.classfriendly and bug.__class__.__name__ == self.__class__.__name__) and not bug.immune():
+            actualstr = 1 + self.strength - self.strdebuff
             enemystr = bug.strength - bug.strdebuff
             if actualstr > enemystr:
                 self.energy += .3*bug.energy

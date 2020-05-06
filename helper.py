@@ -40,7 +40,8 @@ def movebug(bug):
 
 def attackbug(bug):
     for enemy in buggrid[int(bug.x+.5)-1][int(bug.y+.5)-1]:
-        bug.attack(enemy)
+        if enemy != bug:
+            bug.attack(enemy)
 
 def killbug(bug):
     try:
