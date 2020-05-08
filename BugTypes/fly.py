@@ -1,15 +1,17 @@
 import random
 
 import helper
-from .bugnaive import Bug
+from .intellibug import IntelliBug
 
-class Fly(Bug):
+class Fly(IntelliBug):
     colour = "white"
     strength = 1
-    digestion = 14
+    digestion = 10
     fly = False
     birthenergy = 30
     flybonus = 2
+    sight = 5
+    patience = 25
     #         Land Fly
     landchance=[50,50]
 
@@ -25,9 +27,11 @@ class Fly(Bug):
         if index == 0:
             self.fly = False
             self.movemult = 1
+            self.sightbonus = 1
         elif index == 1:
             self.fly = True
             self.movemult = self.flybonus
+            self.sightbonus = 3
         super().step()
 
     def eat(self):
@@ -36,9 +40,9 @@ class Fly(Bug):
 
     def energyloss(self):
         if self.fly:
-            self.energy -= ((.2*self.strength) + (.05*self.lastx)**2 + (.05*self.lasty)**2 + (.05*self.flybonus) + .03*(.03*self.digestion)**3)
+            self.energy -= ((.4*self.strength) + (.2*self.lastx)**2 + (.2*self.lasty)**2 + (.1*self.flybonus) + .3*(.1*self.digestion)**3)
         else:
-            self.energy -= ((.5*self.strength) + (.2*self.lastx)**2 + (.2*self.lasty)**2 + 0.3*(.04*self.digestion)**3)
+            self.energy -= ((.3*self.strength) + (.05*self.lastx)**2 + (.05*self.lasty)**2 + 0.3*(.04*self.digestion)**3)
         if self.energy <= 0:
             self.die()
 

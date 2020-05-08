@@ -1,5 +1,6 @@
 import string
 import os
+import math
 
 from food import Food
 
@@ -35,8 +36,27 @@ def makebug(bug):
     buggrid[int(bug.x+.5)-1][int(bug.y+.5)-1].append(bug)
 
 def movebug(bug):
+    #print(bug)
+    #print(buggrid[int(bug.prevx+.5)-1][int(bug.prevy+.5)-1])
     buggrid[int(bug.prevx+.5)-1][int(bug.prevy+.5)-1].remove(bug)
     buggrid[int(bug.x+.5)-1][int(bug.y+.5)-1].append(bug)
+
+def findenemy(xp, yp, dist):
+    x = int(xp+0.5)-1
+    y = int(yp+0.5)-1
+    for d in range(dist):
+        for i in range(4*d):
+            ang = math.radians(i*(360/(4*d)))
+            try:
+                if len(buggrid[int(x+d*math.sin(ang)+0.5)-1][int(y+d*math.cos(ang)+0.5)-1]) > 0:
+                    return buggrid[int(x+d*math.sin(ang)+0.5)-1][int(y+d*math.cos(ang)+0.5)-1][0]
+            except IndexError:
+                pass
+    return None
+
+
+def distbug(xs, ys, bug):
+    return math.sqrt((xs-bug.x)**2 + (ys-bug.y)**2)
 
 def attackbug(bug):
     for enemy in buggrid[int(bug.x+.5)-1][int(bug.y+.5)-1]:
@@ -59,6 +79,19 @@ def makefood():
     foods.append(food)
     foodgrid[int(food.x+.5)-1][int(food.y+.5)-1].append(food)
 
+def findfood(xp, yp, dist):
+    x = int(xp+0.5)-1
+    y = int(yp+0.5)-1
+    for d in range(dist):
+        for i in range(4*d):
+            ang = math.radians(i*(360/(4*d)))
+            try:
+                if len(foodgrid[int(x+d*math.sin(ang)+0.5)-1][int(y+d*math.cos(ang)+0.5)-1]) > 0:
+                    return foodgrid[int(x+d*math.sin(ang)+0.5)-1][int(y+d*math.cos(ang)+0.5)-1][0]
+            except IndexError:
+                pass
+    return None
+
 # Doesnt int() coords since the bug is expected to for different eating strategies
 def eatfood(x, y):
     amt = len(foodgrid[x][y])
@@ -66,6 +99,7 @@ def eatfood(x, y):
         for food in foodgrid[x][y]:
             foods.remove(food)
             foodgrid[x][y].remove(food)
+            del food
     return amt
 
 def statistics(types):

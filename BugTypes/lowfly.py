@@ -11,9 +11,9 @@ class LowFly(Fly):
 
     def energyloss(self):
         if self.fly:
-            self.energy -= ((.5*self.strength) + (.15*self.lastx)**2 + (.15*self.lasty)**2 + (.06*self.flybonus) + (.05*self.digestion)**3)
+            self.energy -= ((.6*self.strength) + (.15*self.lastx)**2 + (.15*self.lasty)**2 + (.1*self.flybonus) + .5*(.1*self.digestion)**3)
         else:
-            self.energy -= ((.25*self.strength) + (.05*self.lastx)**2 + (.05*self.lasty)**2 + (.04*self.digestion)**3)
+            self.energy -= ((.1*self.strength) + (.05*self.lastx)**2 + (.05*self.lasty)**2 + (.04*self.digestion)**3)
         if self.energy <= 0:
             self.die()
 

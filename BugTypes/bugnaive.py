@@ -1,6 +1,5 @@
 import random
 import helper
-import copy
 import math
 
 class Bug(object):
@@ -11,6 +10,7 @@ class Bug(object):
     classfriendly = False
     jump = True
     followfood = True
+    target = None
     # for display and energy
     lastx = 0
     lasty = 0
@@ -55,14 +55,14 @@ class Bug(object):
         self.prevx = self.x
         self.prevy = self.y
 
-        index = self.randmove(self.movechance)
         if self.ate:
             # Continue moving in the same direction if you ate
             self.ate = False
             self.y += self.lasty
             self.x += self.lastx
         else:
-            # random movement options
+            index = self.direc()
+            # movement options
             if index == 0:
                 self.y+=self.moves[0]*self.movemult
                 self.lasty = self.moves[0]*self.movemult
@@ -97,6 +97,7 @@ class Bug(object):
         self.eat()
         helper.attackbug(self)
         self.energyloss()
+        self.movemult = 1
 
     def eat(self):
         foodgain = 0
@@ -111,14 +112,16 @@ class Bug(object):
         else:
             foodgain = helper.eatfood(int(self.x+.5)-1, int(self.y+.5)-1) * self.digestion
         self.energy += foodgain
-        if self.followfood and foodgain > 0:
-            self.ate = True
-        if self.energy > 50 + math.log(self.digestion):
+        if foodgain > 0:
+            self.target = None
+            if self.followfood:
+                self.ate = True
+        if self.energy > 50 + math.log(self.digestion) and self.immunity <= 0:
             self.energy -= self.birthenergy
             self.reproduce()
 
     def energyloss(self):
-        self.energy -= ((.1*self.strength) + (.1*self.lastx)**2 + (.1*self.lasty)**2 + 0.4*(.04*self.digestion)**4)
+        self.energy -= ((.1*self.strength) + (.1*self.lastx)**2 + (.1*self.lasty)**2 + 0.4*(.1*self.digestion)**3)
         if self.energy <= 0:
             helper.killbug(self)
 
@@ -144,11 +147,11 @@ class Bug(object):
             actualstr = 1 + self.strength - self.strdebuff
             enemystr = bug.strength - bug.strdebuff
             if actualstr > enemystr:
-                self.energy += .3*bug.energy
+                self.energy += .5*bug.energy
                 self.strdebuff += enemystr
                 helper.killbug(bug)
             elif enemystr < actualstr:
-                bug.energy += .3*self.energy
+                bug.energy += .5*self.energy
                 bug.strdebuff += actualstr
                 helper.killbug(self)
             elif self.energy > bug.energy:
@@ -165,6 +168,9 @@ class Bug(object):
     def immune(self):
         return self.immunity > 0
 
+    def speed(self):
+        return self.movemult*(self.moves[0] + self.moves[1] + self.moves[2] + self.moves[3]) / 4
+
     def randmove(self, list):
         chance = 0
         for item in list:
@@ -172,6 +178,19 @@ class Bug(object):
         num = random.random()*chance
         index = 0
         for n in list:
+            num -= n
+            if num <= 0:
+                return index
+            index += 1
+        return 0
+
+    def direc(self):
+        chance = 0
+        for item in self.movechance:
+            chance += item
+        num = random.random()*chance
+        index = 0
+        for n in self.movechance:
             num -= n
             if num <= 0:
                 return index

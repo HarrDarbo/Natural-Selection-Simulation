@@ -3,7 +3,7 @@ from .bugnaive import Bug
 
 class WorkerAnt(Bug):
     digestion = 6
-    strength = 0.9
+    strength = 0.8
     colour = "grey"
     classfriendly = True
     jump = False

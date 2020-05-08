@@ -10,11 +10,12 @@ class HCanvas(object):
     tkbugs = dict()
     tkfoods = dict()
     root = None
-    scale = 2.5
+    scale = 2
     def __init__(self):
         self.root = Tk()
-        self.root.geometry('1010x1005')
-        self.canvas = Canvas(self.root, height=self.scale*helper.clen, width=self.scale*helper.clen, bg='black')
+        self.root.title("Stee's Bug Sim")
+        self.root.geometry('810x805')
+        self.canvas = Canvas(self.root, height=self.scale*(helper.clen+2), width=self.scale*(helper.clen+2), bg='black')
         self.canvas.pack()
 
     def step(self):

@@ -7,13 +7,13 @@ class QueenAnt(Bug):
     energy = 600
     moves = [0.3, 0.3, 0.3, 0.3]
     #          Worker Queen
-    birthprob = [1000,1]
-    strength = 6
+    birthprob = [2000,1]
+    strength = 4
     colour = "yellow"
     classfriendly = True
     jump = False
     Queen = None
-    childhood = 200
+    childhood = 100
     birthenergy = 1
 
     def __init__(self, x, y, birthprobs=None, **kwargs):
@@ -24,7 +24,7 @@ class QueenAnt(Bug):
 
     def step(self):
         if self.immunity > 0:
-            self.movemult = 80
+            self.movemult = 40
         else:
             self.movemult = 1
         super().step()
@@ -51,8 +51,8 @@ class QueenAnt(Bug):
             newhost = list()
             for host in range(2):
                 newhost.append(self.mutate(50))
-            newstr = self.mutate(0.2)
-            newdig = self.mutate(5)
+            newstr = self.mutate(0.6)
+            newdig = self.mutate(4)
             helper.makebug(WorkerAnt(self.x, self.y, Queen=self, moves=newmoves, movechance=newprobs, strength=newstr, digestion=newdig, hostility=newhost))
         elif index == 1:
             newmoves = list()

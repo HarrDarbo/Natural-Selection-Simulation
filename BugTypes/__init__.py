@@ -6,3 +6,4 @@ from .dragonfly import DragonFly
 from .queenant import QueenAnt
 from .ant import WorkerAnt
 from .tick import Tick
+from .intellibug import IntelliBug
