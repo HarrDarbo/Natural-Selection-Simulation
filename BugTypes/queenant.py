@@ -24,7 +24,7 @@ class QueenAnt(Bug):
 
     def step(self):
         if self.immunity > 0:
-            self.movemult = 40
+            self.movemult = 20
         else:
             self.movemult = 1
         super().step()
@@ -33,7 +33,7 @@ class QueenAnt(Bug):
         pass
 
     def energyloss(self):
-        self.energy -= ((.01*self.strength) + (.1*self.lastx)**2 + (.1*self.lasty)**2)
+        self.energy -= ((.05*self.strength) + (.2*self.lastx)**2 + (.2*self.lasty)**2)
         if self.energy <= 0:
             helper.killbug(self)
 

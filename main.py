@@ -30,7 +30,7 @@ def spawnintel(amt):
 
 def start():
     #spawn initial bugs
-    spawnall(15)
+    spawnall(5)
 
     BugSpawns=[Bug.__name__,Beetle.__name__,Fly.__name__,LowFly.__name__,DragonFly.__name__,QueenAnt.__name__,WorkerAnt.__name__,Tick.__name__,IntelliBug.__name__]
 
@@ -46,22 +46,19 @@ def start():
     # Main Loop
     time.sleep(0.3)
     while True:
+        while glb.Freeze:
+            glb.canvas.step()
         skipr += 1
         for bug in glb.bugs:
             bug.step()
-        for n in range(int(((glb.clen/10)**2)/25)):
+        for n in range(glb.foodspawn):
             glb.makefood()
         glb.canvas.step()
         #time.sleep(0.1)
-        if skipr % 100 == 0:
-            glb.statistics(BugSpawns)
-        if skipr % 100 == 0:
-            spawnall(1)
-        if skipr % 1500 == 0:
-            spawnants(1)
-        if(len(glb.bugs) == 0):
-            print("EVERYBODY DIED!")
-            sys.exit(0)
+        #if skipr % 1000 == 0:
+            #glb.statistics(BugSpawns)
+        if skipr % glb.bugspawntimer == 0:
+            glb.spawnbugs(glb.bugspawn)
 
 # Get 'er started
 if __name__ == "__main__":

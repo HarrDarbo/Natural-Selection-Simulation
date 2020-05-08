@@ -1,8 +1,10 @@
 import string
 import os
 import math
+import random
 
 from food import Food
+from BugTypes import *
 
 def init():
     # other
@@ -10,6 +12,26 @@ def init():
     canvas = None
     global clen
     clen = 400
+    global BugSpawns
+    BugSpawns = [IntelliBug,Beetle,Fly,LowFly,DragonFly,Tick]
+    global SpecialSpawns
+    SpecialSpawns = [QueenAnt]
+    global ExtraSpawns
+    ExtraSpawns = [WorkerAnt, Bug]
+    global AllSpawns
+    AllSpawns = []
+    for i in BugSpawns + SpecialSpawns + ExtraSpawns:
+        AllSpawns.append(i)
+
+    # Run parameters
+    global foodspawn
+    foodspawn = 16
+    global bugspawn
+    bugspawn = 5
+    global bugspawntimer
+    bugspawntimer = 100
+    global Freeze
+    Freeze = False
 
     # Bug tracking
     global bugs
@@ -35,9 +57,21 @@ def makebug(bug):
     bugs.append(bug)
     buggrid[int(bug.x+.5)-1][int(bug.y+.5)-1].append(bug)
 
+def spawnbugs(amt):
+    for bug in BugSpawns:
+        for n in range(amt):
+            makebug(bug(int(random.random()*clen)-1, int(random.random()*clen)-1))
+    for bug in SpecialSpawns:
+        for n in range(int(amt/5)):
+            makebug(bug(int(random.random()*clen)-1, int(random.random()*clen)-1))
+
+def spawnbug(name, amt):
+    for bug in AllSpawns:
+        if name == bug.__name__:
+            for n in range(amt):
+                makebug(bug(int(random.random()*clen)-1, int(random.random()*clen)-1))
+
 def movebug(bug):
-    #print(bug)
-    #print(buggrid[int(bug.prevx+.5)-1][int(bug.prevy+.5)-1])
     buggrid[int(bug.prevx+.5)-1][int(bug.prevy+.5)-1].remove(bug)
     buggrid[int(bug.x+.5)-1][int(bug.y+.5)-1].append(bug)
 
@@ -102,8 +136,44 @@ def eatfood(x, y):
             del food
     return amt
 
+def foodrate(rate):
+    global foodspawn
+    foodspawn = rate
+
+def bugrate(rate):
+    global bugspawn
+    bugspawn = rate
+
+def bugratetimer(rate):
+    global bugspawntimer
+    bugspawntimer = rate
+
+def reset():
+    bugs.clear()
+    buggrid.clear()
+    for n in range(clen):
+        buggrid.append([])
+        for m in range(clen):
+            buggrid[n].append([])
+    foods.clear()
+    foodgrid.clear()
+    for n in range(clen):
+        foodgrid.append([])
+        for m in range(clen):
+            foodgrid[n].append([])
+    global foodspawn
+    foodspawn = 0
+    global bugspawn
+    bugspawn = 0
+    global bugspawntimer
+    bugspawntimer = 100
+
+def freeze():
+    global Freeze
+    Freeze = not Freeze
+
 def statistics(types):
-    os.system('clear')
+    #os.system('clear')
     for type in types:
         totalstr = 0
         totalm = [0,0,0,0]
