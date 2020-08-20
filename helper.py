@@ -2,8 +2,9 @@ import string
 import os
 import math
 import random
+import threading
 
-from food import Food
+from food import *
 from BugTypes import *
 
 def init():
@@ -11,23 +12,27 @@ def init():
     global canvas
     canvas = None
     global clen
-    clen = 400
+    clen = 150
+    global stats
+    stats = 'No generated statistics yet'
     global BugSpawns
-    BugSpawns = [IntelliBug,Beetle,Fly,LowFly,DragonFly,Tick]
+    BugSpawns = [GrowBug, GenericFly]
     global SpecialSpawns
-    SpecialSpawns = [QueenAnt]
+    SpecialSpawns = [GenericQueenAnt, GenericQueenBee]
     global ExtraSpawns
-    ExtraSpawns = [WorkerAnt, Bug]
+    ExtraSpawns = [GenericWorkerAnt, GenericWorkerBee]
     global AllSpawns
     AllSpawns = []
     for i in BugSpawns + SpecialSpawns + ExtraSpawns:
         AllSpawns.append(i)
+    global OldSpawns
+    OldSpawns = [Beetle, Fly, DragonFly, QueenAnt, LowFly, Tick]
 
     # Run parameters
     global foodspawn
-    foodspawn = 16
+    foodspawn = 8
     global bugspawn
-    bugspawn = 5
+    bugspawn = 0
     global bugspawntimer
     bugspawntimer = 100
     global Freeze
@@ -46,6 +51,8 @@ def init():
     # Food Tracking
     global foods
     foods = list()
+    global plantenable
+    plantenable = True
     global foodgrid
     foodgrid = []
     for n in range(clen):
@@ -71,26 +78,39 @@ def spawnbug(name, amt):
             for n in range(amt):
                 makebug(bug(int(random.random()*clen)-1, int(random.random()*clen)-1))
 
+def spawnbug(name, amt, x, y):
+    x = int(x+.5)-1
+    y = int(y+.5)-1
+    for bug in AllSpawns:
+        if name == bug.__name__:
+            for n in range(amt):
+                makebug(bug(x, y))
+
 def movebug(bug):
-    buggrid[int(bug.prevx+.5)-1][int(bug.prevy+.5)-1].remove(bug)
-    buggrid[int(bug.x+.5)-1][int(bug.y+.5)-1].append(bug)
+    try:
+        buggrid[int((bug.x-bug.lastx)+.5)-1][int((bug.y-bug.lasty)+.5)-1].remove(bug)
+        buggrid[int(bug.x+.5)-1][int(bug.y+.5)-1].append(bug)
+    except ValueError:
+        # Threading synchronicity cuases problems; death before movement
+        pass
 
 def findenemy(xp, yp, dist):
     x = int(xp+0.5)-1
     y = int(yp+0.5)-1
-    for d in range(dist):
+    misplace = int(random.random()*4)*.5*math.pi
+    for d in range(int(dist+.5)):
         for i in range(4*d):
-            ang = math.radians(i*(360/(4*d)))
+            ang = (math.radians(i*(360/(4*d))) + misplace) % 2*math.pi
             try:
-                if len(buggrid[int(x+d*math.sin(ang)+0.5)-1][int(y+d*math.cos(ang)+0.5)-1]) > 0:
+                if len(buggrid[int(x+d*math.sin(ang)+0.5)-1][int(y+d*math.cos(ang)+0.5)-1]) > 0 and random.random() <= buggrid[int(x+d*math.sin(ang)+0.5)-1][int(y+d*math.cos(ang)+0.5)-1][0].standout:
                     return buggrid[int(x+d*math.sin(ang)+0.5)-1][int(y+d*math.cos(ang)+0.5)-1][0]
             except IndexError:
                 pass
     return None
 
 
-def distbug(xs, ys, bug):
-    return math.sqrt((xs-bug.x)**2 + (ys-bug.y)**2)
+def distance(xs, ys, obj):
+    return math.sqrt((xs-obj.x)**2 + (ys-obj.y)**2)
 
 def attackbug(bug):
     for enemy in buggrid[int(bug.x+.5)-1][int(bug.y+.5)-1]:
@@ -108,33 +128,85 @@ def killbug(bug):
         pass
     bug.die()
 
-def makefood():
+def makerandomfood():
     food = Food()
+    foods.append(food)
+    foodgrid[int(food.x+.5)-1][int(food.y+.5)-1].append(food)
+
+def makerandombush():
+    bush = Bush()
+    foods.append(bush)
+    foodgrid[int(bush.x+.5)-1][int(bush.y+.5)-1].append(bush)
+
+def makefood(x,y):
+    try:
+        food = Food(x,y)
+        foods.append(food)
+        foodgrid[int(food.x+.5)-1][int(food.y+.5)-1].append(food)
+    except IndexError:
+        # Trees do this
+        pass
+
+def makebush(x,y):
+    food = Bush(x,y)
     foods.append(food)
     foodgrid[int(food.x+.5)-1][int(food.y+.5)-1].append(food)
 
 def findfood(xp, yp, dist):
     x = int(xp+0.5)-1
     y = int(yp+0.5)-1
-    for d in range(dist):
+    misplace = int(random.random()*2)*math.pi
+    for d in range(int(dist+.5)):
         for i in range(4*d):
-            ang = math.radians(i*(360/(4*d)))
+            ang = (math.radians(i*(90/d)) + (misplace % (90/d)))
             try:
-                if len(foodgrid[int(x+d*math.sin(ang)+0.5)-1][int(y+d*math.cos(ang)+0.5)-1]) > 0:
-                    return foodgrid[int(x+d*math.sin(ang)+0.5)-1][int(y+d*math.cos(ang)+0.5)-1][0]
+                ct = len(foodgrid[int(x+d*math.cos(ang)+0.5)-1][int(y+d*math.sin(ang)+0.5)-1])
+                for e in range(ct):
+                    if isinstance(foodgrid[int(x+d*math.sin(ang)+0.5)-1][int(y+d*math.cos(ang)+0.5)-1][e], Food):
+                        return foodgrid[int(x+d*math.sin(ang)+0.5)-1][int(y+d*math.cos(ang)+0.5)-1][e]
             except IndexError:
                 pass
     return None
 
-# Doesnt int() coords since the bug is expected to for different eating strategies
-def eatfood(x, y):
+def findbushes(xp, yp, dist):
+    x = int(xp+0.5)-1
+    y = int(yp+0.5)-1
+    bushcount = 0
+    for d in range(int(dist+.5)):
+        for i in range(4*d):
+            ang = math.radians(i*(360/(4*d)))
+            try:
+                ct = len(foodgrid[int(x+d*math.sin(ang)+0.5)-1][int(y+d*math.cos(ang)+0.5)-1])
+                for e in range(ct):
+                    if isinstance(foodgrid[int(x+d*math.sin(ang)+0.5)-1][int(y+d*math.cos(ang)+0.5)-1][e], Bush):
+                        bushcount += 1
+            except IndexError:
+                pass
+    return max(bushcount, 1)
+
+def eatfood(xp, yp):
+    x = int(xp+0.5)-1
+    y = int(yp+0.5)-1
     amt = len(foodgrid[x][y])
     if amt > 0:
+        amt = 0
         for food in foodgrid[x][y]:
-            foods.remove(food)
-            foodgrid[x][y].remove(food)
-            del food
+            if issubclass(food.__class__, Food):
+                foods.remove(food)
+                foodgrid[x][y].remove(food)
+                food.die()
+                del food
+                amt += 1
     return amt
+
+def delfood(xp,yp):
+    x = int(xp+0.5)-1
+    y = int(yp+0.5)-1
+    for food in foodgrid[x][y]:
+        foods.remove(food)
+        foodgrid[x][y].remove(food)
+        food.die()
+        del food
 
 def foodrate(rate):
     global foodspawn
@@ -147,6 +219,10 @@ def bugrate(rate):
 def bugratetimer(rate):
     global bugspawntimer
     bugspawntimer = rate
+
+def flipplants():
+    global plantenable
+    plantenable = not plantenable
 
 def reset():
     bugs.clear()
@@ -172,56 +248,83 @@ def freeze():
     global Freeze
     Freeze = not Freeze
 
-def statistics(types):
-    #os.system('clear')
-    for type in types:
-        totalstr = 0
-        totalm = [0,0,0,0]
-        totalp = [0,0,0,0]
-        totalfly = [0,0]
-        totalhost = [0,0]
-        totalair = 0
-        totaldig = 0
-        totalbonus = 0
-        total = 0
+def allstep():
+    multithread = True
+    if multithread:
+        threadnum = int(len(bugs)/25)+1
+        if threadnum > 500:
+            threadnum = 500
+        threads = list()
+        for x in range(threadnum):
+            threads.append(threading.Thread(target=allstepthread, daemon=True, args=(x,threadnum,)))
+            threads[x].start()
+        for thread in threads:
+            thread.join()
+    else:
         for bug in bugs:
-            if bug.__class__.__name__ == type:
-                total+=1
-                totalstr+=bug.strength
-                totaldig+=bug.digestion
-                totalhost[0]+=bug.hostility[0]
-                totalhost[1]+=bug.hostility[1]
-                for n in range(4):
-                    totalm[n] += bug.moves[n]
-                    totalp[n] += bug.movechance[n]
-                if hasattr(bug, 'fly'):
-                    totalair += 1
-                    totalfly[0] += bug.landchance[0]
-                    totalfly[1] += bug.landchance[1]
-                    totalbonus += bug.flybonus
-        if total > 0:
-            totalhost[0] = totalhost[0]/total
-            totalhost[1] = totalhost[1]/total
-            overallhost = totalhost[0] + totalhost[1]
-            totalstr = totalstr / total
-            totaldig = totaldig / total
-            if totalair > 0:
-                totalfly[0] = totalfly[0] / totalair
-                totalfly[1] = totalfly[1] / totalair
-                totalbonus = totalbonus / totalair
-            overallfly = totalfly[0] + totalfly[1]
-            for n in range(4):
-                totalm[n] = totalm[n] / total
-                totalp[n] = totalp[n] / total
-            overallp = totalp[0] + totalp[1] + totalp[2] + totalp[3]
-            print("===" + str(type) + "=====================")
-            print("|        NORTH SOUTH EAST  WEST  |")
-            print("| PROB: ", str(totalp[0]/overallp)[:5].ljust(5), str(totalp[1]/overallp)[:5].ljust(5), str(totalp[2]/overallp)[:5].ljust(5), str(totalp[3]/overallp)[:5].ljust(5), "|")
-            print("| DIST: ", str(totalm[0])[:5].ljust(5), str(totalm[1])[:5].ljust(5), str(totalm[2])[:5].ljust(5), str(totalm[3])[:5].ljust(5)    , "|")
-            print("| STRENGTH: ", str(totalstr)[:5].ljust(5), "              |")
-            print("| DIGESTION: ", str(totaldig)[:5].ljust(5), "             |")
-            print("| HOSTILITY: ", str(totalhost[0]/overallhost)[:5].ljust(5), str(totalhost[1]/overallhost)[:5].ljust(5) , "       |")
-            if overallfly > 0:
-                print("| LAND/FLY: ", str(totalfly[0]/overallfly)[:5].ljust(5), str(totalfly[1]/overallfly)[:5].ljust(5) , "        |")
-                print("| FLY STAT: ", str(totalbonus)[:5].ljust(5), "              |")
-            print("| BUG COUNT: ",str(total).ljust(5) , "             |")
+            bug.step()
+    for food in foods:
+        if issubclass(food.__class__, Bush):
+            food.step()
+
+def allstepthread(indx,threadnum):
+    start = int((len(bugs)*indx)/threadnum)
+    end = int((len(bugs)*(indx+1))/threadnum)
+    for bug in bugs[start:end]:
+        bug.step()
+
+def statistics():
+    if len(bugs) <= 0:
+        return 'No active bugs'
+    avgstr = 0
+    avgspd = 0
+    avgstout = 0
+    avghostile = [0,0]
+    avgsight = 0
+    avgpat = 0
+    friendly = 0
+    jumps = 0
+    flys = 0
+    queens = 0
+    wrks = 0
+    psns = 0
+    for bug in bugs:
+        if bug.classfriendly:
+            friendly += 1
+        if bug.jump:
+            jumps += 1
+        if bug.fly:
+            flys += 1
+        if bug.queen:
+            queens += 1
+        if bug.worker:
+            wrks += 1
+        if bug.poisonous:
+            psns += 1
+        avgstr += bug.strength
+        avgspd += bug.speed
+        avgstout += bug.standout
+        avghostile[0] += bug.hostility[0]
+        avghostile[1] += bug.hostility[1]
+        avgsight += bug.sight
+        avgpat += bug.patience
+    bugcount = len(bugs)
+    avgstr = avgstr/bugcount
+    avgspd = avgspd/bugcount
+    avgstout = avgstout/bugcount
+    avghostile[0] = avghostile[0]/bugcount
+    avghostile[1] = avghostile[1]/bugcount
+    avgsight = avgsight/bugcount
+    avgpat = avgpat/bugcount
+
+    stats = 'Bug Count: ' + str(bugcount)
+    stats += '\nAvg Strength: ' + str(avgstr)[:5] + '\nAvg Speed: ' + str(avgspd)[:5] + '\nAvg Standout: ' + str(avgstout)[:5] + '\nAvg Hostility: ' + str(avghostile[0]/(2*avghostile[1]))[:5] + '\nAvg Sight: ' + str(avgsight)[:5] + '\nAvg Patience: ' + str(avgpat)[:5]
+    stats += '\nFriendly: ' + str(friendly) + ' (' + str((friendly/bugcount)*100)[:4] + '%)'
+    stats += '\nJumping: ' + str(jumps) + ' (' + str((jumps/bugcount)*100)[:4] + '%)'
+    stats += '\nFlying: ' + str(flys) + ' (' + str((flys/bugcount)*100)[:4] + '%)'
+    stats += '\nQueens: ' + str(queens) + ' (' + str((queens/bugcount)*100)[:4] + '%)'
+    stats += '\nWorkers: ' + str(wrks) + ' (' + str((wrks/bugcount)*100)[:4] + '%)'
+    stats += '\nEusocial: ' + str(wrks+queens) + ' (' + str(((queens+wrks)/bugcount)*100)[:4] + '%)'
+    stats += '\nPoisonous: ' + str(psns) + ' (' + str((psns/bugcount)*100)[:4] + '%)'
+
+    return stats
