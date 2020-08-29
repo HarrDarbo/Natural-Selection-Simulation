@@ -59,18 +59,19 @@ def init():
         foodgrid.append([])
         for m in range(clen):
             foodgrid[n].append([])
+    makebush(clen/2, clen/2)
 
 def makebug(bug):
     bugs.append(bug)
     buggrid[int(bug.x+.5)-1][int(bug.y+.5)-1].append(bug)
 
 def spawnbugs(amt):
-    for bug in OldSpawns:
+    for bug in BugSpawns:
         for n in range(amt):
             makebug(bug(int(random.random()*clen)-1, int(random.random()*clen)-1))
-    #for bug in SpecialSpawns:
-#        for n in range(int(amt/5)):
-#            makebug(bug(int(random.random()*clen)-1, int(random.random()*clen)-1))
+    for bug in SpecialSpawns:
+        for n in range(int(amt/5)):
+            makebug(bug(int(random.random()*clen)-1, int(random.random()*clen)-1))
 
 def spawnbug(name, amt):
     for bug in AllSpawns:

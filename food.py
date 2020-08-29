@@ -18,7 +18,7 @@ class Food(object):
         self.parent = parent
 
     def die(self):
-        if random.random() > 0.999 and helper.plantenable:
+        if random.random() > 0.9995 and helper.plantenable:
             helper.makebush(self.x, self.y)
         if self.parent:
             self.parent.size += 0.02

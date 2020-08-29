@@ -72,7 +72,7 @@ class HCanvas(object):
         # SPAWN SPECIFIC BUG: Below Bug Spawn Rate Time
         self.currentbug = StringVar()
         self.currentbug.set('GrowBug')
-        self.gui['buglist'] = OptionMenu(self.root, self.currentbug, *(i.__name__ for i in helper.OldSpawns))
+        self.gui['buglist'] = OptionMenu(self.root, self.currentbug, *(i.__name__ for i in helper.AllSpawns))
         self.gui['buglist'].grid(row=6,column=2)
         # SPCIFIC BUG SPAWN BUTTON
         self.gui['buglistbutton'] = Button(self.root, text="Specific Bug Spawn", command=self.spawnbugs, width=15)
@@ -126,7 +126,7 @@ class HCanvas(object):
 
     def statize(self):
         self.gui['statisticsmessage'].configure(text=helper.statistics())
-        self.root.after(250, self.statize)
+        self.root.after(200, self.statize)
 
     def reset(self):
         helper.reset()
